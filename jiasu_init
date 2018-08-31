@@ -1,0 +1,50 @@
+#!/bin/bash
+sync_iptable(){
+curl -Lks https://raw.githubusercontent.com/kongbinquan/jiasu_peizhi/master/iptables > /etc/sysconfig/iptables
+service iptables reload 
+}
+rsync_conf(){
+curl -Lks https://raw.githubusercontent.com/kongbinquan/jiasu_peizhi/master/rsync_conf > /etc/rsyncd.conf
+echo "rsync:rsync" > /etc/rsync.pass &&chmod 600 /etc/rsync.pass && \
+rsync --daemon
+}
+install_nginx(){
+[ -d "/data" ] && mkdir -pv /data && \
+[ -d "/usr/local/nginx/conf"] && mkdir -pv /usr/local/nginx/conf && \
+cat > /data/docker-compose.yml << EOF
+version: '3'
+services:
+  nginx:
+    container_name: nginx
+    restart: always
+    privileged: true
+    image: benyoo/nginx:1.10.3
+    network_mode: host
+    environment:
+    - TERM=linux
+    - REWRITE=wordpress
+    - DEFAULT_CONF=disable
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - /data/wwwroot:/data/wwwroot:rw
+    - /data/wwwlogs:/data/wwwlogs:rw
+    - /usr/local/nginx/conf:/usr/local/nginx/conf:rw
+EOF
+docker-compose -f /data/docker-compose.yml up -d
+}
+ 
+sync_iptable
+rsync_conf
+install_nginx
+
+
+
+
+
+
+
+
+
+
+
+
